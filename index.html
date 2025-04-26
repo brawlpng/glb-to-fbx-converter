@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GLB to FBX Converter</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 20px;
+            background-color: #f0f0f0;
+        }
+        h1 {
+            color: #333;
+        }
+        input, button {
+            margin: 10px;
+            padding: 10px;
+            font-size: 16px;
+        }
+        #status {
+            margin-top: 20px;
+            color: #555;
+        }
+    </style>
+</head>
+<body>
+    <h1>GLB to FBX Converter</h1>
+    <input type="file" id="glbFileInput" accept=".glb" />
+    <br>
+    <button onclick="convertFile()">Convert to FBX</button>
+    <p id="status">Status: Idle</p>
+
+    <script>
+        async function convertFile() {
+            const fileInput = document.getElementById('glbFileInput');
+            const status = document.getElementById('status');
+            const file = fileInput.files[0];
+
+            if (!file) {
+                status.textContent = 'Status: Please select a file';
+                return;
+            }
+
+            status.textContent = 'Status: Converting GLB (Flatbuffer) to GLB (JSON)...';
+
+            // Étape 1 : Convertir .glb (Flatbuffer) -> .glb (JSON)
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const response = await fetch('https://votre-serveur.com/convert', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) throw new Error('GLB conversion failed');
+
+                const glbBlob = await response.blob();
+                const glbFile = new File([glbBlob], 'output.glb', { type: 'model/gltf-binary' });
+
+                status.textContent = 'Status: GLB (JSON) ready. Converting to FBX...';
+
+                // Étape 2 : Convertir .glb (JSON) -> .fbx
+                const fbxFormData = new FormData();
+                fbxFormData.append('file', glbFile);
+
+                const fbxResponse = await fetch('https://api.convertio.co/convert', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer votre_clé_api' // Remplacez par votre clé API Convertio
+                    },
+                    body: fbxFormData
+                });
+
+                if (!fbxResponse.ok) throw new Error('FBX conversion failed');
+
+                const fbxBlob = await fbxResponse.blob();
+                const url = window.URL.createObjectURL(fbxBlob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'output.fbx';
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+
+                status.textContent = 'Status: Conversion complete! FBX downloaded';
+            } catch (error) {
+                status.textContent = `Status: Error - ${error.message}`;
+            }
+        }
+    </script>
+</body>
+</html>
